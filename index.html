@@ -1180,41 +1180,6 @@
     </div>
   </section>
 
-  <!-- ============ FOOTER — flows naturally after 舞台, not a snap page ============ -->
-  <div class="footer-block" id="about">
-    <div class="footer-top reveal">
-      <img data-dup="0" alt="Humanoid Error">
-      <span class="tag">HUMANOID ERROR — 超自然偶像選秀企劃</span>
-    </div>
-
-    <div class="footer-grid reveal d1">
-      <div class="footer-col">
-        <h4>製作名單</h4>
-        <div class="credit-line"><span class="role">角卡設計</span>流流</div>
-        <div class="credit-line"><span class="role">Logo 設計</span>桂圓</div>
-        <div class="credit-line"><span class="role">主視覺</span>小諾</div>
-        <div class="credit-line"><span class="role">網站設計</span>汪汪</div>
-        <div class="credit-line"><span class="role">制服設計</span>煦然</div>
-        <div class="credit-line"><span class="role">頭貼設計</span>33</div>
-        <div class="credit-line"><span class="role">文案設計</span>苒苒</div>
-      </div>
-      <div class="footer-col">
-        <h4>關於本站</h4>
-        <p class="ai-note">本網站介面建置過程使用 AI 工具輔助製作，惟企劃、美術與文案等所有創作內容，皆為團隊成員親自完成，未使用 AI 生成。</p>
-      </div>
-      <div class="footer-col footer-links">
-        <h4 style="width:100%;">聯絡我們</h4>
-        <a href="https://www.facebook.com/share/g/19dVxaAN9x/?mibextid=wwXIfr" target="_blank" rel="noopener">Facebook 社團</a>
-        <a href="https://discord.gg/cHbTUXQYu" target="_blank" rel="noopener">Discord 社群</a>
-      </div>
-    </div>
-
-    <div class="footer-bottom reveal d2">
-      <span>© 恐鶴娛樂 KONGHE ENTERTAINMENT</span>
-      <span>HUMANOID ERROR ©2★26</span>
-    </div>
-  </div>
-
 </div>
 
 <!-- album page: full-screen page (not a modal), same look as the 舞台 section -->
@@ -1459,14 +1424,6 @@
   window.addEventListener('resize', updateChrome);
   updateChrome();
 
-  /* footer visibility toggles dark chrome too, without being a snap page */
-  const footerObserver = new IntersectionObserver((entries)=>{
-    entries.forEach(entry=>{
-      if(entry.isIntersecting) document.body.classList.add('dark-nav');
-    });
-  }, { root: container, threshold:0.15 });
-  footerObserver.observe(document.getElementById('about'));
-
   window.addEventListener('keydown', e=>{
     const lbOpen = document.getElementById('lb').classList.contains('open');
     const rosterOpen = document.getElementById('rosterPage').classList.contains('open');
@@ -1623,6 +1580,8 @@
   /* ---- trainee roster page ---- */
   const ROSTER_SLOT_COUNT = 60;   // reserved 3:4 slots; change when the real roster size is known
   const ROSTER_PASSWORD = '0727';
+  /* Firestore collection id for the roster. Changed from 'roster' to start with an empty list (old records stay untouched in the database). */
+  const ROSTER_COLLECTION = 'roster_reset1';
   let rosterCache = [];
   let rosterUnlocked = false;
 
@@ -1792,7 +1751,7 @@
   function startRosterCloud(){
     if(startRosterCloud.done || !window.cloudAlbums) return;
     startRosterCloud.done = true;
-    window.cloudAlbums.subscribe('roster', photos=>{
+    window.cloudAlbums.subscribe(ROSTER_COLLECTION, photos=>{
       rosterCache = photos;
       refreshRoster();
     }, err=> console.error(err));
@@ -1894,11 +1853,11 @@
       const cur = rosterSlotMap()[n];
       try{
         if(!e.name && !e.src && !e.card){
-          if(cur) await window.cloudAlbums.remove('roster', cur.id);
+          if(cur) await window.cloudAlbums.remove(ROSTER_COLLECTION, cur.id);
         } else if(cur){
-          await window.cloudAlbums.update('roster', cur.id, { slot:n, src:e.src, name:e.name, card:e.card });
+          await window.cloudAlbums.update(ROSTER_COLLECTION, cur.id, { slot:n, src:e.src, name:e.name, card:e.card });
         } else {
-          await window.cloudAlbums.add('roster', { slot:n, src:e.src, name:e.name, card:e.card });
+          await window.cloudAlbums.add(ROSTER_COLLECTION, { slot:n, src:e.src, name:e.name, card:e.card });
         }
         delete rosterDraft[n];
       }catch(err){ console.error(err); failed.push(n); }
